@@ -1,3 +1,8 @@
+from app.middleware import RequestContextMiddleware
+from app.logging_config import configure_logging
+
+configure_logging()
+
 """
 Contoso Payments API
 ====================
@@ -13,6 +18,8 @@ import uuid
 import hashlib
 
 app = FastAPI(
+# Correlation middleware (trace_id/request_id)
+app.add_middleware(RequestContextMiddleware, service_name="contoso-payments-api")
     title="Contoso Payments API",
     description="Payment processing service for Contoso e-commerce",
     version="1.0.0",
@@ -326,3 +333,12 @@ def get_receipt(payment_id: str):
         "captured_at": payment.captured_at.isoformat() if payment.captured_at else None,
         "refunded_amount": payment.refunded_amount if payment.refunded_amount > 0 else None,
     }
+
+@app.get("/healthz")
+def healthz():
+    return {"status":"ok","service":"contoso-payments-api","version":"dev","timestamp":"now"}
+
+
+@app.get("/readyz")
+def readyz():
+    return {"status":"ready","service":"contoso-payments-api","version":"dev","timestamp":"now"}
